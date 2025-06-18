@@ -6,11 +6,25 @@
     "configurations": [
 
         {
-            "name": "Python Debugger: Current File",
+            "name": "UI Setup",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/ui_setup.py",
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "name": "Training",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/training.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/test.py",
+            "console": "integratedTerminal"
+        },
     ]
 }

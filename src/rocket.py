@@ -1,4 +1,7 @@
 import math
+import pygame
+
+MAX_SPEED = 20
 
 class Rocket:
     def __init__(self, x, y, orientation, speed, width, height, defensive_mode=False):
@@ -15,6 +18,15 @@ class Rocket:
         radians = math.radians(self.orientation)
         self.x += self.speed * math.cos(radians)
         self.y += self.speed * math.sin(radians)
+    
+    def rotate(self, angle):
+        self.orientation = (self.orientation + angle) % 360
+
+    def increase_speed(self):
+        if self.speed + 1 <= MAX_SPEED:
+            self.speed += 1
+        else:
+            self.speed = MAX_SPEED
 
     def get_position(self):
         return (self.x, self.y)
@@ -31,7 +43,28 @@ class Rocket:
     def is_defensive_mode(self):
         return self.defensive_mode
     
-    def collides_rocket(self, other_rocket):
-        # Check if the distance between the two rockets is less than a threshold
-        distance = math.sqrt((self.x - other_rocket.x) ** 2 + (self.y - other_rocket.y) ** 2)
-        return distance < 1.0
+    def check_collision_rocket(self, other_rocket, screen_height):
+        rocket_center = other_rocket.get_position()
+        rocket_orientation = other_rocket.get_orientation()
+
+        rocket_surface = pygame.Surface((other_rocket.width, other_rocket.height), pygame.SRCALPHA)
+        rocket_surface.fill((255, 255, 255, 255))
+
+        rotated_surface = pygame.transform.rotate(rocket_surface, -rocket_orientation - 90)
+        rotated_rect = rotated_surface.get_rect(center=rocket_center)
+
+        rocket_mask = pygame.mask.from_surface(rotated_surface)
+
+        self_rocket_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self_rocket_surface.fill((255, 255, 255, 255))
+
+        self_rotated_surface = pygame.transform.rotate(self_rocket_surface, -self.orientation - 90)
+        self_rotated_rect = self_rotated_surface.get_rect(center=self.get_position())
+
+        self_rocket_mask = pygame.mask.from_surface(self_rotated_surface)
+
+        offset = (self_rotated_rect.left - rotated_rect.left, self_rotated_rect.top - rotated_rect.top)
+        overlap = rocket_mask.overlap(self_rocket_mask, offset)
+
+        return overlap is not None
+
