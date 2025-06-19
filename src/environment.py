@@ -4,7 +4,7 @@ from rocket import Rocket
 from rocket_launcher import RocketLauncher
 from building import Building
 
-MAX_ROCKETS = 10
+MAX_ROCKETS = 6
 MAX_BUILDINGS = 10
 
 
@@ -13,29 +13,27 @@ class Env:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.rockets = []
-        self.last_num_rockets = 0
+        self.num_of_defences = 0
         self.buildings = []
         self.rocket_launcher = None
-        self.collision_with_building = False
+        self.numer_of_building_collisions = 0
         self.reset()
 
     def reset(self):
         self.rockets = []
         self.buildings = []
         self.rocket_launcher = None
-        self.collision_with_building = False
+        self.numer_of_building_collisions = 0
+        self.num_of_defences = 0
 
         for i in range(int(self.screen_width / 200)):
-            is_last_iteration = (i == int(self.screen_width / 200) - 1)
+            is_last_iteration = i == int(self.screen_width / 200) - 1
             x_position = i * 200 + 100
 
             if random.random() < 0.5:
                 if is_last_iteration and self.rocket_launcher is None:
                     self.rocket_launcher = RocketLauncher(
-                        x=x_position,
-                        y=self.screen_height - 60,
-                        width=120,
-                        height=120
+                        x=x_position, y=self.screen_height - 60, width=120, height=120
                     )
                 else:
                     height = random.randint(100, 200)
@@ -44,30 +42,35 @@ class Env:
             else:
                 if self.rocket_launcher is None:
                     self.rocket_launcher = RocketLauncher(
-                        x=x_position,
-                        y=self.screen_height - 60,
-                        width=120,
-                        height=120
+                        x=x_position, y=self.screen_height - 60, width=120, height=120
                     )
 
         for _ in range(MAX_ROCKETS):
             if random.random() < 0.5:
-                self.rockets.append(Rocket(
-                    x=random.randint(0, self.screen_width),
-                    y=20,
-                    orientation=random.randint(20, 160),
-                    speed=random.randint(5, 10),
-                    width=50,
-                    height=200,
-                    defensive_mode=False
-                ))
+                self.rockets.append(
+                    Rocket(
+                        x=random.randint(0, self.screen_width),
+                        y=20,
+                        orientation=random.randint(20, 160),
+                        speed=random.randint(5, 10),
+                        width=50,
+                        height=200,
+                        defensive_mode=False,
+                    )
+                )
+                # self.rocket_launcher.launch(
+                #     orientation=random.randint(220, 300),
+                #     speed=random.randint(10, 20),
+                #     width=100,
+                #     height=200
+                # )
 
         self.buildings = self.buildings[:MAX_BUILDINGS]
         self.rockets = self.rockets[:MAX_ROCKETS]
         return self.get_state()
 
     def step(self):
-        self.collision_with_building = False
+        self.numer_of_building_collisions = 0
         for rocket in self.rockets:
             rocket.move_one_step()
 
@@ -75,21 +78,45 @@ class Env:
             for rocket in self.rockets[:]:
                 if building.check_collision_rocket(rocket, self.screen_height):
                     self.rockets.remove(rocket)
-                    self.collision_with_building = True
+                    self.buildings.remove(building)
+                    self.numer_of_building_collisions += 1
                     break
 
+        self.num_of_defences = 0
         for rocket in self.rockets[:]:
             for other_rocket in self.rocket_launcher.get_launched_rockets():
-                if rocket.check_collision_rocket(other_rocket, self.screen_height) and \
-                   rocket.is_defensive_mode() != other_rocket.is_defensive_mode():
+                if (
+                    rocket.check_collision_rocket(other_rocket, self.screen_height)
+                    and rocket.is_defensive_mode() != other_rocket.is_defensive_mode()
+                ):
                     self.rockets.remove(rocket)
                     self.rocket_launcher.launched_rockets.remove(other_rocket)
+                    self.num_of_defences += 1
                     break
+
+        # if rockets are out of bounds, remove them
+        self.rockets = [
+            rocket
+            for rocket in self.rockets
+            if 0 <= rocket.get_pos_header()[0] <= self.screen_width
+            and 0 <= rocket.get_pos_header()[1] <= self.screen_height
+        ]
+        self.rocket_launcher.launched_rockets = [
+            rocket
+            for rocket in self.rocket_launcher.get_launched_rockets()
+            if 0 <= rocket.get_pos_header()[0] <= self.screen_width
+            and 0 <= rocket.get_pos_header()[1] <= self.screen_height
+        ]
 
         return self.get_state()
 
     def get_state(self):
-        state = [1 if self.collision_with_building else 0]
+        state = [
+            len(self.rockets),
+            len(self.rocket_launcher.get_launched_rockets()),
+            self.numer_of_building_collisions,
+            self.num_of_defences,
+        ]
 
         # Building info
         for i in range(MAX_BUILDINGS):
@@ -121,19 +148,22 @@ class Env:
                 state.extend([0, 0, 0, 0])
 
         return state
-    
+
     def calculate_reward(self):
         reward = 0
 
-        if self.collision_with_building:
-            return -100
-        
-        if self.last_num_rockets > len(self.rockets):
-            reward += 50
+        reward -= 200 * self.numer_of_building_collisions
+
+        reward += 100 * self.num_of_defences
 
         for i in range(len(self.rocket_launcher.get_launched_rockets())):
-            reward -= 5
-        
+            reward -= 1
+
+        rocket_num_difference = abs(
+            len(self.rocket_launcher.get_launched_rockets()) - len(self.rockets)
+        )
+        reward -= 5 * rocket_num_difference
+
         return reward
 
     def execute_action(self, action):
@@ -154,13 +184,20 @@ class Env:
                 launched[i].rotate(-10)
             elif action == 3 + i * 3:
                 launched[i].rotate(10)
-        
+
         self.step()
-        
+
         reward = self.calculate_reward()
 
-        self.last_num_rockets = len(self.rockets)
-
-        done = len(self.rockets) == 0 or self.collision_with_building
+        # check whether all rockets are out of bounds or if there is a collision with a building
+        done = True
+        for rocket in self.rockets:
+            if (
+                0 <= rocket.get_pos_header()[0] <= self.screen_width
+                and 0 <= rocket.get_pos_header()[1] <= self.screen_height
+            ):
+                done = False
+                break
+        done = len(self.rockets) == 0 or done
 
         return self.get_state(), reward, done, {}

@@ -83,6 +83,8 @@ while not done:
 
     for rocket in env.rockets:
         overlay_rocket(rocket, screen)
+    for rocket in env.rocket_launcher.get_launched_rockets():
+        overlay_rocket(rocket, screen)
     for rocket in env.rockets:
         rocket.move_one_step()
     for rocket in env.rocket_launcher.get_launched_rockets():
