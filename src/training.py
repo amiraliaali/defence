@@ -8,6 +8,8 @@ from environment import Env
 from tqdm import trange
 from dqn import DQN
 
+torch.backends.cudnn.benchmark = True
+
 # Hyperparameters
 GAMMA = 0.99
 EPSILON_START = 0.9
@@ -15,9 +17,9 @@ EPSILON_END = 0.05
 EPSILON_DECAY = 0.999
 LR = 0.001
 BATCH_SIZE = 64
-TARGET_UPDATE = 10
+TARGET_UPDATE = 250
 MEMORY_SIZE = 100_000
-NUM_EPISODES = 50
+NUM_EPISODES = 3000
 MAX_STEPS = 500
 
 # Device
@@ -27,7 +29,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 env = Env(SCREEN_WIDTH, SCREEN_HEIGHT)
 state_size = len(env.get_state())
-action_size = 1 + 3 * 10  # 1 for launch, 3 per rocket
+action_size = 1 + 3 * 1  # 1 for launch, 3 per rocket
 
 
 # Memory
@@ -64,7 +66,9 @@ def replay():
     dones = torch.FloatTensor(dones).unsqueeze(1).to(device)
 
     q_values = policy_net(states).gather(1, actions)
-    next_q_values = target_net(next_states).max(1)[0].unsqueeze(1)
+    with torch.no_grad():
+        next_q_values = target_net(next_states).max(1)[0].unsqueeze(1)
+
     target_q = rewards + (GAMMA * next_q_values * (1 - dones))
 
     loss = nn.MSELoss()(q_values, target_q)

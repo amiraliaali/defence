@@ -26,5 +26,12 @@
             "program": "${workspaceFolder}/src/test.py",
             "console": "integratedTerminal"
         },
+        {
+            "name": "Run current file",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal"
+        }
     ]
 }

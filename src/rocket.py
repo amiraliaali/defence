@@ -18,7 +18,7 @@ class Rocket:
         radians = math.radians(self.orientation)
         self.x += self.speed * math.cos(radians)
         self.y += self.speed * math.sin(radians)
-    
+
     def rotate(self, angle):
         self.orientation = (self.orientation + angle) % 360
 
@@ -28,21 +28,27 @@ class Rocket:
         else:
             self.speed = MAX_SPEED
 
+    def decrease_speed(self):
+        if self.speed - 1 > 0:
+            self.speed -= 1
+        else:
+            self.speed = 1
+
     def get_position(self):
         return (self.x, self.y)
-    
+
     def get_pos_header(self):
         x_head = self.x + (self.width / 2) * math.cos(math.radians(self.orientation))
         y_head = self.y + (self.height / 2) * math.sin(math.radians(self.orientation))
 
         return (x_head, y_head)
-    
+
     def get_orientation(self):
         return self.orientation
-    
+
     def is_defensive_mode(self):
         return self.defensive_mode
-    
+
     def check_collision_rocket(self, other_rocket, screen_height):
         rocket_center = other_rocket.get_position()
         rocket_orientation = other_rocket.get_orientation()

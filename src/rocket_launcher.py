@@ -2,11 +2,11 @@ from rocket import Rocket
 
 class RocketLauncher:
     def __init__(self, x, y, width, height):
-        self.launched_rockets = []
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.rocket_launched = False
 
     def launch(self, orientation, speed, width, height):
         self.rocket = Rocket(
@@ -18,7 +18,11 @@ class RocketLauncher:
             height=height,
             defensive_mode=True
         )
-        self.launched_rockets.append(self.rocket)
+        self.rocket_launched = True
 
-    def get_launched_rockets(self):
-        return self.launched_rockets
+
+    def get_launched_rocket(self):
+        return self.rocket
+
+    def is_rocket_launched(self):
+        return self.rocket_launched

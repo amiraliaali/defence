@@ -18,9 +18,21 @@ from ui_setup import (
 )
 
 WIDTH, HEIGHT = 1200, 800
-FPS = 30
+FPS = 20
 RENDER_DELAY = 1 / FPS
 MODEL_PATH = "dqn_defense_model.pth"
+
+import os
+import cv2
+import numpy as np
+
+VIDEO_FOLDER = "test_videos"
+os.makedirs(VIDEO_FOLDER, exist_ok=True)
+video_filename = os.path.join(VIDEO_FOLDER, "test_1.mp4")
+
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # codec for mp4
+video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (WIDTH, HEIGHT))
+
 
 # Initialize game window
 screen, font, colors = setup_game()
@@ -28,7 +40,7 @@ screen, font, colors = setup_game()
 # Initialize environment
 env = Env(WIDTH, HEIGHT)
 state_size = len(env.get_state())
-action_size = 1 + 3 * 10
+action_size = 1 + 3 * 1
 
 # Load trained model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -68,33 +80,31 @@ while not done:
 
     for building in env.buildings:
         # Optional: explosion if hit
-        if any(building.check_collision_rocket(r, HEIGHT) for r in env.rockets):
+        if building.check_collision_rocket(env.attacking_rocket, HEIGHT):
             overlay_explosion(building.get_x_position(), 300, screen)
             done = True
         else:
             overlay_building(building, screen)
 
-    for r1 in env.rockets:
-        for r2 in env.rockets:
-            if r1 != r2 and r1.check_collision_rocket(r2, HEIGHT) and r1.is_defensive_mode() != r2.is_defensive_mode():
-                overlay_explosion_rockets(r1.get_pos_header(), 200, screen)
-                if r1 in env.rockets: env.rockets.remove(r1)
-                if r2 in env.rockets: env.rockets.remove(r2)
 
-    for rocket in env.rockets:
-        overlay_rocket(rocket, screen)
-    for rocket in env.rocket_launcher.get_launched_rockets():
-        overlay_rocket(rocket, screen)
-    for rocket in env.rockets:
-        rocket.move_one_step()
-    for rocket in env.rocket_launcher.get_launched_rockets():
-        rocket.move_one_step()
+    overlay_rocket(env.attacking_rocket, screen)
+    overlay_rocket(env.defensive_rocket, screen)
+
+    env.attacking_rocket.move_one_step()
+    env.defensive_rocket.move_one_step()
+
 
     # Display reward
     reward_text = reward_font.render(f"Reward: {total_reward:.2f}", True, colors["black"])
     screen.blit(reward_text, (10, 10))
 
     pygame.display.flip()
+    # Capture screen pixels
+    frame = pygame.surfarray.array3d(pygame.display.get_surface())
+    frame = np.transpose(frame, (1, 0, 2))
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    video_writer.write(frame_bgr)
+
     clock.tick(FPS)
 
 # Final reward message
@@ -104,4 +114,13 @@ final_msg = font.render(f"Test complete! Total Reward: {total_reward:.2f}", True
 screen.blit(final_msg, (WIDTH // 2 - final_msg.get_width() // 2, HEIGHT // 2))
 pygame.display.flip()
 time.sleep(3)
+
+for _ in range(FPS * 2):  # show for 2 seconds
+    frame = pygame.surfarray.array3d(pygame.display.get_surface())
+    frame = np.transpose(frame, (1, 0, 2))
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    video_writer.write(frame_bgr)
+
+video_writer.release()
+print(f"Video saved to {video_filename}")
 pygame.quit()
