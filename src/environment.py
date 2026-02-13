@@ -180,9 +180,9 @@ class Env:
 
         # Sparse rewards
         if self.defended:
-            reward += 10
+            reward += 50
         if self.building_collision:
-            reward -= 20
+            reward -= 100
 
         return reward
 
@@ -194,10 +194,8 @@ class Env:
         elif action == 1:
             self.defensive_rocket.increase_speed()
         elif action == 2:
-            self.defensive_rocket.decrease_speed()
-        elif action == 3:
             self.defensive_rocket.rotate(-5)
-        elif action == 4:
+        elif action == 3:
             self.defensive_rocket.rotate(5)
 
 
