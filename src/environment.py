@@ -6,6 +6,7 @@ from building import Building
 import numpy as np
 
 MAX_BUILDINGS = 10
+MAX_STEPS = 200
 
 
 class Env:
@@ -19,9 +20,11 @@ class Env:
         self.rocket_launcher = None
         self.building_collision = False
         self.last_iter_distance = np.inf
+        self.current_step = 0
         self.reset()
 
     def reset(self):
+        self.current_step = 0
         self.buildings = []
         self.rocket_launcher = None
         self.building_collision = False
@@ -103,28 +106,44 @@ class Env:
         # Building info
         for i in range(MAX_BUILDINGS):
             if i < len(self.buildings):
-                state.append(self.buildings[i].get_height())
-                state.append(self.buildings[i].get_x_position())
+                state.append(self.buildings[i].get_height() / self.screen_height)
+                state.append(self.buildings[i].get_x_position() / self.screen_width)
             else:
                 state.extend([0, 0])
 
         # Attacking rocket
-        state.append(self.attacking_rocket.get_pos_header()[0])
-        state.append(self.attacking_rocket.get_pos_header()[1])
-        state.append(self.attacking_rocket.get_orientation())
-        # state.append(int(self.rockets[i].is_defensive_mode()))
+        attack_x, attack_y = self.attacking_rocket.get_pos_header()
+        attack_angle = self.attacking_rocket.get_orientation() / 360  # normalized
+        state.append(attack_x / self.screen_width)
+        state.append(attack_y / self.screen_height)
+        state.append(attack_angle)
 
+        # Defensive rocket
+        defend_x, defend_y = self.defensive_rocket.get_pos_header()
+        defend_angle = self.defensive_rocket.get_orientation() / 360  # normalized
+        state.append(defend_x / self.screen_width)
+        state.append(defend_y / self.screen_height)
+        state.append(defend_angle)
 
-        # Defensive rockets
-        state.append(self.defensive_rocket.get_pos_header()[0])
-        state.append(self.defensive_rocket.get_pos_header()[1])
-        state.append(self.defensive_rocket.get_orientation())
-        # state.append(int(launched[i].is_defensive_mode()))
+        # Distance between rockets
+        distance = self.calculate_rocket_distances() / np.hypot(self.screen_width, self.screen_height)
+        state.append(distance)
 
-        state.append(self.calculate_rocket_distances())
+        # --- Head-to-head angle difference ---
+        # Vector from defensive rocket to attacking rocket
+        vector_x = attack_x - defend_x
+        vector_y = attack_y - defend_y
+        target_angle = np.degrees(np.arctan2(vector_y, vector_x)) % 360  # angle from defensive rocket to attacker
 
+        # Defensive rocket orientation
+        defensive_angle = self.defensive_rocket.get_orientation() % 360
+
+        # Angle difference
+        angle_diff = (target_angle - defensive_angle + 180) % 360 - 180  # normalize to [-180, 180]
+        state.append(angle_diff / 180)  # normalized to [-1, 1]
 
         return state
+
 
     def calculate_rocket_distances(self):
         attack_x, attack_y = self.attacking_rocket.get_pos_header()
@@ -136,30 +155,51 @@ class Env:
         return np.sqrt(x_difference**2 + y_difference**2)
 
     def calculate_reward(self):
-        current_iter_distance = self.calculate_rocket_distances()
+        # Distance-based reward
+        distance = self.calculate_rocket_distances()
+        distance_reward = 1 - distance / np.hypot(self.screen_width, self.screen_height)
 
-        if current_iter_distance < self.last_iter_distance:
-            reward = 1
-        else:
-            reward = -1
+        # Head-to-head angle reward
+        attack_x, attack_y = self.attacking_rocket.get_pos_header()
+        defend_x, defend_y = self.defensive_rocket.get_pos_header()
 
-        self.last_iter_distance = current_iter_distance
+        # Vector from defensive rocket to attacking rocket
+        vector_x = attack_x - defend_x
+        vector_y = attack_y - defend_y
+        target_angle = np.degrees(np.arctan2(vector_y, vector_x)) % 360
 
-        if self.building_collision:
-            return -200
+        # Defensive rocket orientation
+        defensive_angle = self.defensive_rocket.get_orientation() % 360
 
+        # Angle difference normalized to [0,1], smaller is better
+        angle_diff = (target_angle - defensive_angle + 180) % 360 - 180  # [-180, 180]
+        angle_reward = 1 - abs(angle_diff) / 180  # 1 if perfect, 0 if pointing away
+
+        # Combine distance and angle reward
+        reward = distance_reward + angle_reward  # can weight them if needed
+
+        # Sparse rewards
         if self.defended:
-            return 100
+            reward += 10
+        if self.building_collision:
+            reward -= 20
 
         return reward
 
+
+
     def execute_action(self, action):
-        if action == 1:
+        if action == 0:
+            pass
+        elif action == 1:
             self.defensive_rocket.increase_speed()
         elif action == 2:
-            self.defensive_rocket.rotate(-10)
+            self.defensive_rocket.decrease_speed()
         elif action == 3:
-            self.defensive_rocket.rotate(10)
+            self.defensive_rocket.rotate(-5)
+        elif action == 4:
+            self.defensive_rocket.rotate(5)
+
 
         self.step()
 
@@ -173,7 +213,9 @@ class Env:
         ):
             done = False
 
-        if self.defended or self.building_collision:
+        if self.defended or self.building_collision or self.current_step > MAX_STEPS:
             done = True
+
+        self.current_step += 1
 
         return self.get_state(), reward, done, {}
