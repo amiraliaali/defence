@@ -8,11 +8,29 @@ Here are some test videos after training the model with the current training par
 </div>
 
 ## Overview
-As I first heared and learned about the Iron Dome, I got curious how it works. With that in mind, I tried to implement a simple environment in which one attacking rocket tries to drop on a city and one defensive rocket tries to intercept it before reaching the city.
+As I first heared and learned about the Iron Dome, I got curious on how it works. With that in mind, I tried to implement a simple environment in which_
+- An **attacking rocket** tries to strike a city
+- A **defensive rocket** tries to intercept it before impact.
 
-We train a Deep Q-Network agent with the abilities to turn the defensive rocket by five degrees either left or right and tzo increase the speed (with a maximum speed defined).
+To solve this task, a **Deep Q-Network (DQN)** agent is trained to control the defensive rocket.
 
-The attacking rocket in each iteration is positioned, orented and given a speed randomly.
+### Agent Capabilities
+
+At each timestep, the agent can:
+
+- Rotate the defensive rocket **5° left**
+- Rotate the defensive rocket **5° right**
+- Increase its speed (up to a predefined maximum)
+
+### Environment Randomization
+
+At the beginning of each episode:
+
+- The attacking rocket’s **position**
+- **Orientation**
+- **Initial speed**
+
+are randomly initialized to encourage robust learning.
 
 ## Project Structure
 ```
