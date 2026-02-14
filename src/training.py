@@ -16,8 +16,8 @@ EPSILON_START = 0.9
 EPSILON_END = 0.05
 EPSILON_DECAY = 0.995
 LR = 0.001
-BATCH_SIZE = 128
-TARGET_UPDATE = 100
+BATCH_SIZE = 32
+TARGET_UPDATE = 200
 MEMORY_SIZE = 100_000
 NUM_EPISODES = 3000
 MAX_STEPS = 500
@@ -29,7 +29,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 env = Env(SCREEN_WIDTH, SCREEN_HEIGHT)
 state_size = len(env.get_state())
-action_size = 5
+action_size = 4
 
 
 # Memory

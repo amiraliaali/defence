@@ -28,7 +28,7 @@ import numpy as np
 
 VIDEO_FOLDER = "test_videos"
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
-video_filename = os.path.join(VIDEO_FOLDER, "test_6.mp4")
+video_filename = os.path.join(VIDEO_FOLDER, "test_14.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # codec for mp4
 video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (WIDTH, HEIGHT))
@@ -40,7 +40,7 @@ screen, font, colors = setup_game()
 # Initialize environment
 env = Env(WIDTH, HEIGHT)
 state_size = len(env.get_state())
-action_size = 5
+action_size = 4
 
 # Load trained model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

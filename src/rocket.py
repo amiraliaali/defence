@@ -37,6 +37,12 @@ class Rocket:
     def get_position(self):
         return (self.x, self.y)
 
+    def get_speed(self):
+        return self.speed
+
+    def get_speed_norm(self):
+        return self.speed/MAX_SPEED
+
     def get_pos_header(self):
         x_head = self.x + (self.width / 2) * math.cos(math.radians(self.orientation))
         y_head = self.y + (self.height / 2) * math.sin(math.radians(self.orientation))

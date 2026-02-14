@@ -99,6 +99,7 @@ class Env:
 
     def get_state(self):
         state = [
+            self.defensive_rocket.get_speed_norm(),
             int(self.building_collision),
             int(self.defended),
         ]
@@ -182,7 +183,7 @@ class Env:
         if self.defended:
             reward += 50
         if self.building_collision:
-            reward -= 100
+            reward -= 50
 
         return reward
 
