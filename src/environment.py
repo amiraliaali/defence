@@ -158,7 +158,8 @@ class Env:
     def calculate_reward(self):
         # Distance-based reward
         distance = self.calculate_rocket_distances()
-        distance_reward = 1 - distance / np.hypot(self.screen_width, self.screen_height)
+        # distance_reward = 1 - distance / np.hypot(self.screen_width, self.screen_height)
+        distance_reward = - distance / np.hypot(self.screen_width, self.screen_height)
 
         # Head-to-head angle reward
         attack_x, attack_y = self.attacking_rocket.get_pos_header()

@@ -28,7 +28,7 @@ import numpy as np
 
 VIDEO_FOLDER = "test_videos"
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
-video_filename = os.path.join(VIDEO_FOLDER, "test_14.mp4")
+video_filename = os.path.join(VIDEO_FOLDER, "test_13.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # codec for mp4
 video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (WIDTH, HEIGHT))
@@ -99,11 +99,19 @@ while not done:
     screen.blit(reward_text, (10, 10))
 
     pygame.display.flip()
-    # Capture screen pixels
-    frame = pygame.surfarray.array3d(pygame.display.get_surface())
-    frame = np.transpose(frame, (1, 0, 2))
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-    video_writer.write(frame_bgr)
+    if done:
+        for _ in range(FPS*2):
+            # Capture screen pixels
+            frame = pygame.surfarray.array3d(pygame.display.get_surface())
+            frame = np.transpose(frame, (1, 0, 2))
+            frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            video_writer.write(frame_bgr)
+    else:
+        # Capture screen pixels
+        frame = pygame.surfarray.array3d(pygame.display.get_surface())
+        frame = np.transpose(frame, (1, 0, 2))
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        video_writer.write(frame_bgr)
 
     clock.tick(FPS)
 
