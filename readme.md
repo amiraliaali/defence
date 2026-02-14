@@ -4,7 +4,7 @@
 Here are some test videos after training the model with the current training parameters in ```src/training.py```.
 
 <div style="display: flex; gap: 10px;">
-  <img src="https://github.com/amiraliaali/defence/demo_video.gif" width="900" height="500" />
+  <img src="https://github.com/amiraliaali/defence/blob/main/demo_video.gif" width="900" height="500" />
 </div>
 
 ## Overview
