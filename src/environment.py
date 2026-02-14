@@ -37,7 +37,7 @@ class Env:
             if random.random() < 0.5:
                 if is_last_iteration and self.rocket_launcher is None:
                     self.rocket_launcher = RocketLauncher(
-                        x=x_position, y=self.screen_height - 60, width=120, height=120
+                        x=x_position, y=self.screen_height - 60, width=80, height=80
                     )
                 else:
                     height = random.randint(100, 200)
@@ -46,7 +46,7 @@ class Env:
             else:
                 if self.rocket_launcher is None:
                     self.rocket_launcher = RocketLauncher(
-                        x=x_position, y=self.screen_height - 60, width=120, height=120
+                        x=x_position, y=self.screen_height - 60, width=80, height=80
                     )
 
         self.attacking_rocket = Rocket(
@@ -54,8 +54,8 @@ class Env:
                 y=20,
                 orientation=random.randint(20, 160),
                 speed=random.randint(5, 10),
-                width=50,
-                height=200,
+                width=30,
+                height=120,
                 defensive_mode=False,
             )
 
@@ -63,8 +63,8 @@ class Env:
         self.rocket_launcher.launch(
             orientation=random.randint(220, 300),
             speed=random.randint(10, 20),
-            width=100,
-            height=200
+            width=60,
+            height=120
         )
         self.defensive_rocket = self.rocket_launcher.get_launched_rocket()
 
@@ -175,10 +175,10 @@ class Env:
 
         # Angle difference normalized to [0,1], smaller is better
         angle_diff = (target_angle - defensive_angle + 180) % 360 - 180  # [-180, 180]
-        angle_reward = 1 - abs(angle_diff) / 180  # 1 if perfect, 0 if pointing away
+        angle_reward = abs(angle_diff) / 180  # 1 if perfect, 0 if pointing away
 
         # Combine distance and angle reward
-        reward = distance_reward + angle_reward  # can weight them if needed
+        reward = distance_reward - angle_reward  # can weight them if needed
 
         # Sparse rewards
         if self.defended:

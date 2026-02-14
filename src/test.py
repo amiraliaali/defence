@@ -28,7 +28,7 @@ import numpy as np
 
 VIDEO_FOLDER = "test_videos"
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
-video_filename = os.path.join(VIDEO_FOLDER, "test_13.mp4")
+video_filename = os.path.join(VIDEO_FOLDER, "test_38.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # codec for mp4
 video_writer = cv2.VideoWriter(video_filename, fourcc, FPS, (WIDTH, HEIGHT))
